@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get previous build number
+        id: getPreviousBuild
+        run: | 
+          PREVIOUS_TAG=$(git for-each-ref --sort=-version:refname --count 1 --format="%(refname:short)" "refs/tags/*")
+          echo result=${PREVIOUS_TAG} >> $GITHUB_OUTPUT
+          echo number=${PREVIOUS_TAG#v} >> $GITHUB_OUTPUT
+
+      - name: Get current build number
+        id: getCurrentBuild
+        if: success()
+        env:
+          PREVIOUS_BUILD: ${{ steps.getPreviousBuild.outputs.number }}
+        run: echo result=v$((++PREVIOUS_BUILD)) >> $GITHUB_OUTPUT
+
+      - name: Zip the skill
+        run: |
+          mkdir -p dist/bds-proxypass
+          cp -r SKILL.md README.md scripts dist/bds-proxypass/
+          (cd dist && zip -r "../bds-proxypass-${{ steps.getCurrentBuild.outputs.result }}.zip" bds-proxypass)
+
+      - name: Generate release diff
+        if: ${{ success() && github.ref_name == 'master' }}
+        env:
+          BEGIN_COMMIT: ${{ steps.getPreviousBuild.outputs.result }}
+        run: |
+          git fetch --tags --force
+          # The new tag does not exist until the release step creates it, so end the range at HEAD.
+          if [ -n "${BEGIN_COMMIT}" ]; then
+            RANGE="${BEGIN_COMMIT}..HEAD"
+          else
+            RANGE="HEAD"
+          fi
+          git log --pretty=format:"* %s (%h)" ${RANGE} > release_notes.md
+
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        if: ${{ success() && github.ref_name == 'master' }}
+        with:
+          artifacts: "bds-proxypass-${{ steps.getCurrentBuild.outputs.result }}.zip"
+          allowUpdates: true
+          bodyFile: "release_notes.md"
+          draft: false
+          prerelease: false
+          name: Build ${{ steps.getCurrentBuild.outputs.result }} (${{ github.ref_name }})
+          tag: ${{ steps.getCurrentBuild.outputs.result }}
+          token: ${{ secrets.GITHUB_TOKEN }}
