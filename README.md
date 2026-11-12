@@ -115,6 +115,8 @@ dumped to `<root>/proxypass-run/data/` resolve them. To quieten the log, edit `i
 
 ## Credits
 
+Written with [Claude Code](https://claude.com/claude-code).
+
 [ProxyPass](https://github.com/CloudburstMC/ProxyPass) is by CloudburstMC. Minecraft and the Bedrock
 Dedicated Server are Mojang/Microsoft products, downloaded from minecraft.net under their own terms;
 this repository ships neither.
