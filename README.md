@@ -10,16 +10,16 @@ sends, as a reference to compare a custom server against.
 Bedrock client  ->  ProxyPass 0.0.0.0:19122  ->  BDS 127.0.0.1:19132
 ```
 
-Both sides run offline over NetherNet by default. The BDS version is a parameter, so several
+Both sides run offline over NetherNet. The BDS version is a parameter, so several
 versions can sit side by side.
 
 ## Requirements
 
 - **Windows or Linux** — the matching BDS build is picked automatically.
 - **Python 3.8+** — standard library only, nothing to install.
-- **Git**, on `PATH`, to clone ProxyPass.
-- **A JDK**. ProxyPass pins a JDK 17 Gradle toolchain, so JDK 17 itself has to be installed to build
-  it; a newer JDK alone is not enough. Any JDK 17+ is used to run the built jar, preferring 21.
+- **A JDK** to run ProxyPass. It is downloaded as a prebuilt jar from its own releases, so there is
+  nothing to compile, but the jar only runs on the JDK it was built with or newer — build 1 needs
+  JDK 25. Setup reads that requirement out of the jar and names the version it needs.
 - **A Bedrock client** to join with.
 
 Downloading BDS means accepting the [Minecraft EULA](https://minecraft.net/terms) and
@@ -83,10 +83,8 @@ python scripts/bds_proxypass.py teardown
 | `--preview` | off | Use the preview channel |
 | `--root` | `<temp dir>/bds-proxypass` | Where the environment lives; `$BDS_PROXYPASS_ROOT` also sets it |
 | `--proxy-port` / `--server-port` | `19122` / `19132` | Port the client joins / port BDS listens on |
-| `--transport` | `nethernet` | `nethernet` or `raknet`, applied to both sides |
-| `--proxypass-ref` | `master` | ProxyPass branch, tag or commit to build |
-| `--java-home` | auto | JDK used to build and run ProxyPass |
-| `--rebuild` | off | Force a ProxyPass rebuild |
+| `--proxypass-build` | `latest` | ProxyPass release to download, by build number |
+| `--java-home` | auto (matches the jar) | JDK used to run ProxyPass |
 
 Setup is idempotent: an existing download, extraction and jar are reused, and `server.properties`
 and `config.yml` are patched key by key, so comments and your own edits survive a re-run. Nothing is
@@ -106,7 +104,7 @@ dumped to `<root>/proxypass-run/data/` resolve them. To quieten the log, edit `i
 
 - **Codec mismatch.** ProxyPass hard-codes one protocol codec. Setup prints it (`codec Bedrock_vNNNN`).
   If it does not match the protocol of the BDS version you picked, the client cannot join — choose a
-  `--proxypass-ref` that matches, or a different `--version`.
+  `--proxypass-build` that matches, or a different `--version`.
 - **Switching versions.** Stop the servers, then re-run `setup` with a different `--version`. Each
   version gets its own directory, so nothing is clobbered.
 - **Ports.** Joining 19132 bypasses the proxy and captures nothing. Use 19122.
